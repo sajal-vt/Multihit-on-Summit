@@ -1,0 +1,20 @@
+#!/bin/bash
+# Begin LSF directives
+#BSUB -P project_id
+#BSUB -J ACC-100
+#BSUB -o ACC-100.o%J
+#BSUB -e ACC-100.e%J
+#BSUB -W 02:00
+#BSUB -nnodes 100
+#BSUB -alloc_flags "nvme smt4"
+# End LSF directives and begin shell commands
+
+NODES=$(cat ${LSB_DJOB_HOSTFILE} | sort | uniq | grep -v login | grep -v batch | wc -l)
+
+module load cuda/10.1.243
+
+export data_dir=../data
+echo "Running on 100 nodes"
+time jsrun -n100 -a1 -c1 -g6 --bind=proportional-packed:1 --launch_distribution=packed stdbuf -o0 ./compute_4hits.o $data_dir/ACC.maf2dat.matrix.out.training $data_dir/manifest_normal_normal.txt.training.txt.geneSampleList 0.1 6 ACC-100-schedule.txt 100
+
+
